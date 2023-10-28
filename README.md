@@ -15,6 +15,7 @@ Wishlist:
 - You can provide a list of packages to install.
   - E.g., `[ pkgs.broot pkgs.ripgrep ]`
   - I'm imagining a flake output like `home-mangler.packages` or something.
+  - Think `nix profile` but good UX.
 - You can provide a derivation of files to overlay in the home directory.
   - E.g., `~/your-dotfiles-dir`, potentially with `filterSource` or a more
     sophisticated tool like `rcm`. Or `chezmoi`.
