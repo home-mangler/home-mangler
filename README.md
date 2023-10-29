@@ -20,6 +20,7 @@ Wishlist:
   - E.g., `~/your-dotfiles-dir`, potentially with `filterSource` or a more
     sophisticated tool like `rcm`. Or `chezmoi`.
     - Does Nix think home-directory-relative paths are impure?
+  - Maybe you could also provide an attribute set with directory structure.
 - You can provide a program or programs to run (in your home directory).
   - Like uh `home-manager switch` haha.
   - Or `topgrade`.
