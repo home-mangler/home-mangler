@@ -5,6 +5,7 @@ use miette::IntoDiagnostic;
 use tap::TryConv;
 
 #[derive(clap::Parser)]
+#[allow(rustdoc::bare_urls)]
 pub struct Opts {
     /// Tracing log filter.
     ///

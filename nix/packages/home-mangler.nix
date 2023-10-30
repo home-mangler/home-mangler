@@ -37,7 +37,6 @@
   checks = {
     home-mangler-tests = craneLib.cargoNextest (commonArgs
       // {
-        NEXTEST_PROFILE = "ci";
         NEXTEST_HIDE_PROGRESS_BAR = "true";
       });
     home-mangler-clippy = craneLib.cargoClippy (commonArgs
