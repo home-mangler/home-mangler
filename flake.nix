@@ -27,17 +27,17 @@
     crane,
     advisory-db,
   }: let
-    eachSystem = function:
-      nixpkgs.lib.genAttrs
-      (import systems)
-      (system: function nixpkgs.legacyPackages.${system});
+    eachSystem = nixpkgs.lib.genAttrs (import systems);
   in {
     lib =
       eachSystem
-      (pkgs:
+      (system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
         pkgs.callPackage ./nix/makeLib.nix {});
 
-    packages = eachSystem (pkgs: let
+    packages = eachSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
       inherit (pkgs) lib;
       packages = pkgs.callPackage ./nix/makePackages.nix {inherit inputs;};
     in
@@ -46,8 +46,10 @@
         default = packages.home-mangler;
       });
 
-    devShells = eachSystem (pkgs: {
-      default = self.packages.${pkgs.system}.home-mangler.devShell;
+    checks = eachSystem (system: self.packages.${system}.home-mangler.checks);
+
+    devShells = eachSystem (system: {
+      default = self.packages.${system}.home-mangler.devShell;
     });
 
     overlays.default = final: prev: let
