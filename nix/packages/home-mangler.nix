@@ -5,6 +5,8 @@
   libiconv,
   darwin,
   inputs,
+  rustPlatform,
+  rust-analyzer,
 }: let
   inherit (inputs) crane advisory-db;
   craneLib = crane.lib.${system};
@@ -53,6 +55,18 @@
         inherit advisory-db;
       });
   };
+
+  devShell = craneLib.devShell {
+    inherit checks;
+
+    # Make rust-analyzer work
+    RUST_SRC_PATH = rustPlatform.rustLibSrc;
+
+    # Extra development tools (cargo and rustc are included by default).
+    packages = [
+      rust-analyzer
+    ];
+  };
 in
   # Build the actual crate itself, reusing the dependency
   # artifacts from above.
@@ -68,5 +82,6 @@ in
 
       passthru = {
         inherit checks;
+        inherit devShell;
       };
     })

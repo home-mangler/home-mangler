@@ -39,6 +39,10 @@
         default = packages.home-mangler;
       });
 
+    devShells = eachSystem (pkgs: {
+      default = self.packages.${pkgs.system}.home-mangler.devShell;
+    });
+
     overlays.default = final: prev: let
       packages = final.callPackage ./nix/makePackages.nix {inherit inputs;};
     in {
