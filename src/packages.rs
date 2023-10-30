@@ -24,18 +24,23 @@ pub fn ensure_packages(flake: &str, hostname: &str) -> miette::Result<()> {
     if !missing_paths.is_empty() {
         let removed_paths = profile.remove_old_packages(&resolved, &flake_attr)?;
         install_new_packages(&package_installable)?;
-        tracing::info!(
-            "Updated `nix profile`:\n{}\n{}",
-            (removed_paths.difference(&missing_paths))
-                .map(|p| format!("- {p}"))
-                .join("\n")
-                .red(),
-            missing_paths
-                .iter()
-                .map(|p| format!("+ {p}"))
-                .join("\n")
-                .green(),
-        );
+
+        let mut diff = String::new();
+        let removed_display = (removed_paths.difference(&missing_paths))
+            .map(|p| format!("- {p}"))
+            .join("\n");
+        if !removed_display.is_empty() {
+            diff.push('\n');
+            diff.push_str(&removed_display.red().to_string());
+        }
+
+        let added_display = missing_paths.iter().map(|p| format!("+ {p}")).join("\n");
+        if !added_display.is_empty() {
+            diff.push('\n');
+            diff.push_str(&added_display.green().to_string());
+        }
+
+        tracing::info!("Updated `nix profile`:{diff}");
     } else {
         tracing::info!(
             "Already up to date:\n{}",
