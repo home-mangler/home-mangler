@@ -33,11 +33,10 @@
 
     packages = eachSystem (pkgs: let
       packages = pkgs.callPackage ./nix/makePackages.nix {inherit inputs;};
-    in
-      packages
-      // {
-        default = packages.home-mangler;
-      });
+    in {
+      pkgs = packages;
+      default = packages.home-mangler;
+    });
 
     devShells = eachSystem (pkgs: {
       default = self.packages.${pkgs.system}.home-mangler.devShell;
