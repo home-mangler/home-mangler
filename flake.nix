@@ -32,12 +32,13 @@
         pkgs.callPackage ./nix/makeLib.nix {});
 
     packages = eachSystem (pkgs: let
+      inherit (pkgs) lib;
       packages = pkgs.callPackage ./nix/makePackages.nix {inherit inputs;};
-    in {
-      pkgs = packages;
-      default = packages.home-mangler;
-      inherit (packages) home-mangler;
-    });
+    in
+      (lib.filterAttrs (name: value: lib.isDerivation value) packages)
+      // {
+        default = packages.home-mangler;
+      });
 
     devShells = eachSystem (pkgs: {
       default = self.packages.${pkgs.system}.home-mangler.devShell;
