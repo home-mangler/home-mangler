@@ -34,8 +34,12 @@
 ## Features
 
 - `home-mangler` can manage your Nix profile by keeping a set of packages
-  installed.
+  installed:
 
+      Installing new packages
+      Updated `nix profile`:
+      - /nix/store/vwdgac9hifbssmw8hfkvm777pmc04pwh-home-mangler-packages
+      + /nix/store/l1br3isl9pnhgg4rsazmrn436rhxiyd9-home-mangler-packages
 
 ## Roadmap
 
