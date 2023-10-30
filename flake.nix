@@ -4,18 +4,45 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
     systems.url = "github:nix-systems/default";
+    crane = {
+      url = "github:ipetkov/crane";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    advisory-db = {
+      url = "github:rustsec/advisory-db";
+      flake = false;
+    };
   };
 
-  outputs = {
+  outputs = inputs @ {
     self,
     nixpkgs,
     systems,
+    crane,
+    advisory-db,
   }: let
-    eachSystem = function: nixpkgs.lib.genAttrs (import systems) (system: function nixpkgs.legacyPackages.${system});
+    eachSystem = function:
+      nixpkgs.lib.genAttrs
+      (import systems)
+      (system: function nixpkgs.legacyPackages.${system});
   in {
     lib =
       eachSystem
       (pkgs:
         pkgs.callPackage ./nix/makeLib.nix {});
+
+    packages = eachSystem (pkgs: let
+      packages = pkgs.callPackage ./nix/makePackages.nix {inherit inputs;};
+    in
+      packages
+      // {
+        default = packages.home-mangler;
+      });
+
+    overlays.default = final: prev: let
+      packages = final.callPackage ./nix/makePackages.nix {inherit inputs;};
+    in {
+      inherit (packages) home-mangler;
+    };
   };
 }

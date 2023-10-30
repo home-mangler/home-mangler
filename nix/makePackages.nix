@@ -1,6 +1,7 @@
 {
   lib,
   newScope,
+  inputs,
 }:
 lib.makeScope newScope (
   self: let
@@ -9,5 +10,5 @@ lib.makeScope newScope (
       inherit (self) callPackage;
     };
   in
-    packagesFromDirectory "./lib"
+    {inherit inputs;} // (packagesFromDirectory "./packages")
 )
