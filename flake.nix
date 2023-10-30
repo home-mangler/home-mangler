@@ -36,6 +36,7 @@
     in {
       pkgs = packages;
       default = packages.home-mangler;
+      inherit (packages) home-mangler;
     });
 
     devShells = eachSystem (pkgs: {
