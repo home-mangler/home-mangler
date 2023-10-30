@@ -31,6 +31,10 @@ pub struct Args {
     #[arg(long)]
     pub flake: Option<String>,
 
+    /// Update `--flake` inputs with `nix flake update` before building configuration.
+    #[arg(long)]
+    pub update: bool,
+
     /// The hostname to build the configuration for.
     ///
     /// This corresponds to the `home-mangler.${hostname}` output attribute in your flake.

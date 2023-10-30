@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use camino::Utf8Path;
 use camino::Utf8PathBuf;
 use itertools::Itertools;
+use miette::Context;
 use owo_colors::OwoColorize;
 
 use crate::command_ext::CommandExt;
@@ -11,7 +12,12 @@ use crate::nix;
 use crate::nix::ProfileList;
 use crate::nix::ResolvedFlake;
 
-pub fn ensure_packages(flake: &str, hostname: &str) -> miette::Result<()> {
+pub fn ensure_packages(flake: &str, hostname: &str, update: bool) -> miette::Result<()> {
+    if update {
+        nix::flake_update(flake)
+            .wrap_err_with(|| format!("Failed to update `flake.lock` for {flake}"))?;
+    }
+
     let flake_attr = format!("home-mangler.{hostname}.packages");
     let package_installable = format!("{flake}#{flake_attr}");
 

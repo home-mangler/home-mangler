@@ -27,7 +27,7 @@ fn main() -> miette::Result<()> {
     let flake = config.flake()?;
     let hostname = config.hostname()?;
     ::tracing::debug!(%flake, %hostname, "Resolved configuration");
-    packages::ensure_packages(flake.as_str(), &hostname)?;
+    packages::ensure_packages(flake.as_str(), &hostname, config.update())?;
 
     Ok(())
 }

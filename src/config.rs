@@ -28,6 +28,8 @@ pub struct ConfigFile {
     log_filter: Option<LogFilter>,
 
     flake: Option<String>,
+
+    update: Option<bool>,
 }
 
 impl ConfigFile {
@@ -104,7 +106,18 @@ impl Config {
         ret
     }
 
+    pub fn update(&self) -> bool {
+        if self.args.update {
+            return true;
+        }
+        self.file.update.unwrap_or(false)
+    }
+
     pub fn flake(&self) -> miette::Result<String> {
+        if let Some(flake) = &self.args.flake {
+            return Ok(flake.clone());
+        }
+
         if let Some(flake) = &self.file.flake {
             return Ok(flake.clone());
         }
