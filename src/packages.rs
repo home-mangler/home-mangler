@@ -82,8 +82,9 @@ impl ProfileList {
         match &self {
             ProfileList::V2(packages) => {
                 for (i, package) in packages.iter().enumerate() {
-                    if package.attr_path == attr_path
-                        && package.original_url == flake.metadata.original_url
+                    if package.attr_path.as_deref() == Some(attr_path)
+                        && package.original_url.as_deref()
+                            == Some(flake.metadata.original_url.as_str())
                     {
                         indices_to_remove.push(i);
                         paths_to_remove.extend(package.store_paths.iter().map(|p| p.as_path()));
