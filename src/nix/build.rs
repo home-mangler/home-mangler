@@ -1,4 +1,5 @@
 use std::collections::BTreeSet;
+use std::process::Stdio;
 
 use camino::Utf8PathBuf;
 
@@ -14,6 +15,7 @@ pub fn build(installable: &str) -> miette::Result<BTreeSet<Utf8PathBuf>> {
             "--print-out-paths",
             installable,
         ])
+        .stderr(Stdio::inherit())
         .stdout_checked_utf8()?;
 
     Ok(stdout.lines().map(Utf8PathBuf::from).collect())
