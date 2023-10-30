@@ -45,21 +45,6 @@ pub struct ProfileListV2Element {
     /// How is an element 'deactivated'?
     pub active: bool,
 
-    /// `home-mangler.grandiflora.packages`
-    ///
-    /// Why is there no `original_attr_path`?
-    pub attr_path: String,
-
-    /// `git+file:///Users/wiggles/.dotfiles?dir=config/home-mangler`
-    ///
-    /// TODO: When does this differ from `url`?
-    pub original_url: String,
-
-    /// `null` or `["man"]`
-    ///
-    /// Doesn't seem to include the default output `out`. Or maybe that's only if it's `null`?
-    pub outputs: Option<Vec<String>>,
-
     /// 5
     pub priority: u16,
 
@@ -67,5 +52,20 @@ pub struct ProfileListV2Element {
     pub store_paths: Vec<Utf8PathBuf>,
 
     /// `git+file:///Users/wiggles/.dotfiles?dir=config/home-mangler`
-    pub url: String,
+    pub url: Option<String>,
+
+    /// `home-mangler.grandiflora.packages`
+    ///
+    /// Why is there no `original_attr_path`?
+    pub attr_path: Option<String>,
+
+    /// `git+file:///Users/wiggles/.dotfiles?dir=config/home-mangler`
+    ///
+    /// TODO: When does this differ from `url`?
+    pub original_url: Option<String>,
+
+    /// `null` or `["man"]`
+    ///
+    /// Doesn't seem to include the default output `out`. Or maybe that's only if it's `null`?
+    pub outputs: Option<Vec<String>>,
 }
