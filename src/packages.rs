@@ -18,6 +18,7 @@ pub fn ensure_packages(flake: &str, hostname: &str) -> miette::Result<()> {
     // TODO: We have a few things we could run in separate threads here.
     let resolved = nix::resolve(flake.to_owned())?;
 
+    // TODO: Recover gracefully if attribute doesn't exist.
     let package_out_paths = nix::build(&package_installable)?;
     let profile = nix::profile_list()?;
     let missing_paths = profile.missing_paths(&package_out_paths)?;

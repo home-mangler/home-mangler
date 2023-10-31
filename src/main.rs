@@ -2,6 +2,7 @@ use clap::Parser;
 
 mod cli;
 mod command_ext;
+mod files;
 mod format_bulleted_list;
 mod nix;
 mod packages;
@@ -15,7 +16,9 @@ fn main() -> miette::Result<()> {
 
     let flake_dir = opts.flake_directory()?;
     let hostname = opts.hostname()?;
-    packages::ensure_packages(flake_dir.as_str(), &hostname)?;
+    // packages::ensure_packages(flake_dir.as_str(), &hostname)?;
+
+    files::ensure_files(flake_dir.as_str(), &hostname)?;
 
     Ok(())
 }
