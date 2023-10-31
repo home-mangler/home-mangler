@@ -92,9 +92,13 @@ impl Config {
             None => {}
         }
 
-        if let Some(filter) = &self.args.log_filter {
+        if let Some(filter) = &self.args.log_filter() {
             ret.push(',');
             ret.push_str(filter);
+        }
+
+        if ret.is_empty() {
+            ret.push_str(crate::tracing::DEFAULT_FILTER);
         }
 
         ret

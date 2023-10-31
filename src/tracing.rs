@@ -8,6 +8,9 @@ use tracing_subscriber::Registry;
 
 type ReloadHandle = Handle<EnvFilter, Registry>;
 
+/// The default filter directive.
+pub const DEFAULT_FILTER: &str = "info";
+
 pub fn install_tracing(
     filter_directives: &str,
 ) -> std::result::Result<ReloadHandle, miette::Report> {

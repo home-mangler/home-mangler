@@ -16,7 +16,11 @@ pub use format_bulleted_list::format_bulleted_list;
 
 fn main() -> miette::Result<()> {
     let opts = cli::Args::parse();
-    let filter_reload = tracing::install_tracing(opts.log_filter.as_deref().unwrap_or("info"))?;
+    let filter_reload = tracing::install_tracing(
+        opts.log_filter()
+            .as_deref()
+            .unwrap_or(tracing::DEFAULT_FILTER),
+    )?;
     let config = Config::from_args(opts)?;
     tracing::update_log_filters(&filter_reload, &config.log_filter())?;
 

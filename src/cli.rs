@@ -11,6 +11,14 @@ pub struct Args {
     #[arg(long, env = "HOME_MANGLER_LOG")]
     pub log_filter: Option<String>,
 
+    /// Alias for `--log-filter=trace`.
+    #[arg(long)]
+    pub debug: bool,
+
+    /// Alias for `--log-filter=debug`.
+    #[arg(short, long)]
+    pub verbose: bool,
+
     /// Path to the configuration file to use.
     ///
     /// Defaults to `~/.config/home-mangler/config.toml`.
@@ -37,5 +45,25 @@ impl Args {
         }
 
         project_paths.config_paths()
+    }
+
+    pub fn log_filter(&self) -> Option<String> {
+        let mut ret = String::new();
+
+        if let Some(filter) = &self.log_filter {
+            ret.push_str(filter);
+        }
+
+        if self.debug {
+            ret.push_str(",trace");
+        } else if self.verbose {
+            ret.push_str(",debug");
+        }
+
+        if ret.is_empty() {
+            None
+        } else {
+            Some(ret)
+        }
     }
 }
