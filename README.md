@@ -45,5 +45,4 @@
 
 - [#5: Overlay files from a derivation into your home directory.](https://github.com/home-mangler/home-mangler/issues/5)
 - [#6: Run a script or scripts in your home directory.](https://github.com/home-mangler/home-mangler/issues/6)
-- [#7: A configuration file.](https://github.com/home-mangler/home-mangler/issues/7)
 - [#8: Compatibility with home-manager modules.](https://github.com/home-mangler/home-mangler/issues/8)

@@ -1,87 +1,69 @@
 use camino::Utf8PathBuf;
-use miette::miette;
-use miette::Context;
-use miette::IntoDiagnostic;
-use tap::TryConv;
+
+use crate::ProjectPaths;
 
 #[derive(clap::Parser)]
 #[allow(rustdoc::bare_urls)]
-pub struct Opts {
+pub struct Args {
     /// Tracing log filter.
     ///
     /// See: https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html#directives
-    #[arg(long, env = "HOME_MANGLER_LOG", default_value = "info")]
-    pub log_filter: String,
+    #[arg(long, env = "HOME_MANGLER_LOG")]
+    pub log_filter: Option<String>,
+
+    /// Alias for `--log-filter=trace`.
+    #[arg(long)]
+    pub debug: bool,
+
+    /// Alias for `--log-filter=debug`.
+    #[arg(short, long)]
+    pub verbose: bool,
+
+    /// Path to the configuration file to use.
+    ///
+    /// Defaults to `~/.config/home-mangler/config.toml`.
+    #[arg(long)]
+    pub config: Option<Utf8PathBuf>,
+
+    /// Flake containing home-mangler configuration.
+    ///
+    /// Defaults to the `--config` directory.
+    #[arg(long)]
+    pub flake: Option<String>,
 
     /// The hostname to build the configuration for.
     ///
     /// This corresponds to the `home-mangler.${hostname}` output attribute in your flake.
     #[arg(long, alias = "host", env = "HOSTNAME")]
-    hostname: Option<String>,
+    pub hostname: Option<String>,
 }
 
-impl Opts {
-    pub fn config_dir(&self) -> miette::Result<Utf8PathBuf> {
-        let mut home = dirs::home_dir()
-            .ok_or_else(|| miette!("Unable to find home directory"))?
-            .try_conv::<Utf8PathBuf>()
-            .into_diagnostic()?;
-
-        // TODO: Support those `$XDG` environment variables that nobody uses.
-        home.push(".config");
-        home.push("home-mangler");
-
-        Ok(home)
-    }
-
-    pub fn flake_directory(&self) -> miette::Result<Utf8PathBuf> {
-        // We resolve symlinks to work around Nix.
-        // See: https://github.com/NixOS/nix/issues/9253
-        let mut flake_dir = self
-            .config_dir()
-            .wrap_err("Could not find home-mangler config directory")?;
-        if flake_dir
-            .symlink_metadata()
-            .into_diagnostic()
-            .wrap_err_with(|| format!("Failed to query metadata for {flake_dir}"))?
-            .is_symlink()
-        {
-            // TODO: What if there's multiple layers of link?
-            flake_dir = flake_dir
-                .read_link_utf8()
-                .into_diagnostic()
-                .wrap_err_with(|| format!("Failed to read link: {flake_dir}"))?;
+impl Args {
+    pub fn config_paths(&self, project_paths: &ProjectPaths) -> miette::Result<Vec<Utf8PathBuf>> {
+        if let Some(path) = &self.config {
+            return Ok(vec![path.clone()]);
         }
 
-        let mut flake_file = flake_dir.clone();
-        flake_file.push("flake.nix");
-
-        if flake_file
-            .symlink_metadata()
-            .into_diagnostic()
-            .wrap_err_with(|| format!("Failed to query metadata for {flake_file}"))?
-            .is_symlink()
-        {
-            // TODO: What if there's multiple layers of link?
-            flake_dir = flake_file
-                .read_link_utf8()
-                .into_diagnostic()
-                .wrap_err_with(|| format!("Failed to read link: {flake_file}"))?;
-            flake_dir = flake_dir
-                .parent()
-                .ok_or_else(|| miette!("Path has no parent directory: {flake_dir}"))?
-                .to_owned();
-        }
-
-        Ok(flake_dir)
+        project_paths.config_paths()
     }
 
-    pub fn hostname(&self) -> miette::Result<String> {
-        match &self.hostname {
-            Some(hostname) => Ok(hostname.clone()),
-            None => gethostname::gethostname()
-                .into_string()
-                .map_err(|s| miette!("Hostname is not UTF-8: {s:?}")),
+    pub fn log_filter(&self) -> Option<String> {
+        let mut ret = String::new();
+
+        if let Some(filter) = &self.log_filter {
+            ret.push_str(filter);
+        }
+
+        if self.debug {
+            ret.push_str(",trace");
+        } else if self.verbose {
+            ret.push_str(",debug");
+        }
+
+        if ret.is_empty() {
+            None
+        } else {
+            Some(ret)
         }
     }
 }
