@@ -138,7 +138,7 @@ impl Config {
 }
 
 /// We resolve symlinks to work around Nix.
-/// See: https://github.com/NixOS/nix/issues/9253
+/// See: <https://github.com/NixOS/nix/issues/9253>
 fn fix_flake_path(path: &Utf8Path) -> miette::Result<Utf8PathBuf> {
     let mut path = path
         .parent()
