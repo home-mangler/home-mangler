@@ -11,6 +11,9 @@ pub use flake_metadata::resolve;
 pub use flake_metadata::FlakeMetadata;
 pub use flake_metadata::ResolvedFlake;
 
+mod flake_update;
+pub use flake_update::flake_update;
+
 mod build;
 pub use build::build;
 
