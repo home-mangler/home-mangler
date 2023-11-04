@@ -4,6 +4,7 @@ mod cli;
 mod command_ext;
 mod config;
 mod directories;
+mod flake;
 mod format_bulleted_list;
 mod nix;
 mod packages;
@@ -27,7 +28,7 @@ fn main() -> miette::Result<()> {
     let flake = config.flake()?;
     let hostname = config.hostname()?;
     ::tracing::debug!(%flake, %hostname, "Resolved configuration");
-    packages::ensure_packages(flake.as_str(), &hostname, config.update())?;
+    packages::ensure_packages(&flake, &hostname, config.update())?;
 
     Ok(())
 }

@@ -7,12 +7,13 @@ use miette::Context;
 use owo_colors::OwoColorize;
 
 use crate::command_ext::CommandExt;
+use crate::flake::Flake;
 use crate::format_bulleted_list;
 use crate::nix;
 use crate::nix::ProfileList;
 use crate::nix::ResolvedFlake;
 
-pub fn ensure_packages(flake: &str, hostname: &str, update: bool) -> miette::Result<()> {
+pub fn ensure_packages(flake: &Flake, hostname: &str, update: bool) -> miette::Result<()> {
     if update {
         nix::flake_update(flake)
             .wrap_err_with(|| format!("Failed to update `flake.lock` for {flake}"))?;
@@ -22,7 +23,7 @@ pub fn ensure_packages(flake: &str, hostname: &str, update: bool) -> miette::Res
     let package_installable = format!("{flake}#{flake_attr}");
 
     // TODO: We have a few things we could run in separate threads here.
-    let resolved = nix::resolve(flake.to_owned())?;
+    let resolved = nix::resolve(flake.clone())?;
 
     let package_out_paths = nix::build(&package_installable)?;
     let profile = nix::profile_list()?;
