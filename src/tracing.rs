@@ -18,12 +18,7 @@ pub fn install_tracing(
 
     let (env_filter, reload_handle) = tracing_subscriber::reload::Layer::new(env_filter);
 
-    let subscriber = tracing_subscriber::fmt::layer()
-        .compact()
-        .without_time()
-        .with_level(false)
-        .with_target(false)
-        .with_filter(env_filter);
+    let subscriber = tracing_human_layer::HumanLayer::default().with_filter(env_filter);
 
     tracing_subscriber::registry()
         .with(subscriber)

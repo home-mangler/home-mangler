@@ -19,4 +19,5 @@ shell-words = "1.1.0"
 tap = "1.0.1"
 toml = "0.8.6"
 tracing = { version = "0.1.40", features = ["attributes"] }
+tracing-human-layer = "0.1.1"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
