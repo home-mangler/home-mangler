@@ -26,10 +26,9 @@ enum LogFilter {
 pub struct ConfigFile {
     #[serde(alias = "log_filters")]
     log_filter: Option<LogFilter>,
-
     flake: Option<String>,
-
     update: Option<bool>,
+    use_path_flake: Option<bool>,
 }
 
 impl ConfigFile {
@@ -113,6 +112,10 @@ impl Config {
         self.file.update.unwrap_or(false)
     }
 
+    fn use_path_flake(&self) -> bool {
+        self.args.use_path_flake || self.file.use_path_flake.unwrap_or(false)
+    }
+
     pub fn flake(&self) -> miette::Result<String> {
         if let Some(flake) = &self.args.flake {
             return Ok(flake.clone());
@@ -134,7 +137,12 @@ impl Config {
 
         for path in &paths {
             if path.try_exists().into_diagnostic()? {
-                return Ok(fix_flake_path(path)?.into_string());
+                let flake_path = fix_flake_path(path)?;
+                return Ok(if self.use_path_flake() {
+                    format!("path:{flake_path}")
+                } else {
+                    flake_path.into_string()
+                });
             }
         }
 

@@ -25,6 +25,14 @@ pub struct Args {
     #[arg(long)]
     pub config: Option<Utf8PathBuf>,
 
+    /// If `--flake` is not given, force a path flake (instead of a Git flake or similar) by
+    /// prefixing the flake path with `path:`.
+    ///
+    /// This can be useful if you want to leave a lockfile `.gitignore`d;
+    /// https://github.com/NixOS/nix/issues/8854
+    #[arg(long)]
+    pub use_path_flake: bool,
+
     /// Flake containing home-mangler configuration.
     ///
     /// Defaults to the `--config` directory.
