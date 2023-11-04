@@ -5,6 +5,7 @@ use miette::Context;
 use miette::IntoDiagnostic;
 
 use crate::cli::Args;
+use crate::flake::Flake;
 use crate::format_bulleted_list;
 use crate::ProjectPaths;
 
@@ -116,13 +117,19 @@ impl Config {
         self.args.use_path_flake || self.file.use_path_flake.unwrap_or(false)
     }
 
-    pub fn flake(&self) -> miette::Result<String> {
+    pub fn flake(&self) -> miette::Result<Flake> {
+        Ok(self
+            .flake_unconfigured()?
+            .set_use_path_flake(self.use_path_flake()))
+    }
+
+    fn flake_unconfigured(&self) -> miette::Result<Flake> {
         if let Some(flake) = &self.args.flake {
-            return Ok(flake.clone());
+            return flake.parse();
         }
 
         if let Some(flake) = &self.file.flake {
-            return Ok(flake.clone());
+            return flake.parse();
         }
 
         let mut paths = self.project_paths.flake_paths()?;
@@ -137,12 +144,7 @@ impl Config {
 
         for path in &paths {
             if path.try_exists().into_diagnostic()? {
-                let flake_path = fix_flake_path(path)?;
-                return Ok(if self.use_path_flake() {
-                    format!("path:{flake_path}")
-                } else {
-                    flake_path.into_string()
-                });
+                return path.as_path().try_into();
             }
         }
 
@@ -160,48 +162,4 @@ impl Config {
                 .map_err(|s| miette!("Hostname is not UTF-8: {s:?}")),
         }
     }
-}
-
-/// We resolve symlinks to work around Nix.
-/// See: <https://github.com/NixOS/nix/issues/9253>
-fn fix_flake_path(path: &Utf8Path) -> miette::Result<Utf8PathBuf> {
-    let mut path = path
-        .parent()
-        .ok_or_else(|| miette!("Path has no parent: {path}"))?
-        .to_path_buf();
-
-    if path
-        .symlink_metadata()
-        .into_diagnostic()
-        .wrap_err_with(|| format!("Failed to query metadata for {path}"))?
-        .is_symlink()
-    {
-        // TODO: What if there's multiple layers of link?
-        path = path
-            .read_link_utf8()
-            .into_diagnostic()
-            .wrap_err_with(|| format!("Failed to read link: {path}"))?;
-    }
-
-    let mut flake_file = path.clone();
-    flake_file.push("flake.nix");
-
-    if flake_file
-        .symlink_metadata()
-        .into_diagnostic()
-        .wrap_err_with(|| format!("Failed to query metadata for {flake_file}"))?
-        .is_symlink()
-    {
-        // TODO: What if there's multiple layers of link?
-        path = flake_file
-            .read_link_utf8()
-            .into_diagnostic()
-            .wrap_err_with(|| format!("Failed to read link: {flake_file}"))?;
-        path = path
-            .parent()
-            .ok_or_else(|| miette!("Path has no parent directory: {path}"))?
-            .to_owned();
-    }
-
-    Ok(path)
 }
