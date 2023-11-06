@@ -4,7 +4,9 @@ use std::fmt::Display;
 use camino::Utf8Path;
 use camino::Utf8PathBuf;
 use miette::miette;
+use miette::Context;
 use miette::IntoDiagnostic;
+use path_absolutize::Absolutize;
 
 use crate::format_bulleted_list;
 
@@ -33,6 +35,8 @@ impl Display for SymlinkChain {
 }
 
 pub fn read_symlink(mut path: Utf8PathBuf) -> miette::Result<SymlinkChain> {
+    let orig = path.clone();
+    tracing::debug!("Resolving symlink {orig}");
     let mut seen = BTreeSet::new();
     let mut intermediate = Vec::new();
 
@@ -45,7 +49,21 @@ pub fn read_symlink(mut path: Utf8PathBuf) -> miette::Result<SymlinkChain> {
         }
 
         seen.insert(path.clone());
-        path = path.read_link_utf8().into_diagnostic()?;
+        let parent = path.parent().map(|p| p.to_path_buf());
+        path = path.read_link_utf8().into_diagnostic().wrap_err_with(|| {
+            format!("Failed to read link {path} while resolving symlink {orig}")
+        })?;
+        if let Some(parent) = parent {
+            path = path
+                .as_std_path()
+                .absolutize_from(parent.as_std_path())
+                .into_diagnostic()
+                .wrap_err_with(|| format!("Failed to join {parent} and {path}"))?
+                .into_owned()
+                .try_into()
+                .into_diagnostic()?;
+        }
+        tracing::debug!("Resolved symlink to {path}");
         intermediate.push(path.clone());
     }
 

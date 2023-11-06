@@ -1,3 +1,6 @@
+use std::collections::BTreeSet;
+
+use camino::Utf8Path;
 use clap::Parser;
 
 mod cli;
@@ -27,6 +30,19 @@ fn main() -> miette::Result<()> {
     )?;
     let config = Config::from_args(opts)?;
     tracing::update_log_filters(&filter_reload, &config.log_filter())?;
+
+    println!(
+        "{}",
+        diff_trees::diff_trees(
+            &BTreeSet::from([Utf8Path::new(
+                "/nix/store/1w39p07mws3zv6skf3p40ilw8bma7f5h-home-mangler-packages"
+            )]),
+            &BTreeSet::from([Utf8Path::new(
+                "/nix/store/rgy242kgmadxi607qkq3iij8ppbckzc0-home-mangler-packages"
+            )])
+        )?
+    );
+    return Ok(());
 
     let flake = config.flake()?;
     let hostname = config.hostname()?;

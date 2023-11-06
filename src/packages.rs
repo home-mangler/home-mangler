@@ -2,9 +2,7 @@ use std::collections::BTreeSet;
 
 use camino::Utf8Path;
 use camino::Utf8PathBuf;
-use itertools::Itertools;
 use miette::Context;
-use owo_colors::OwoColorize;
 
 use crate::command_ext::CommandExt;
 use crate::flake::Flake;
@@ -32,22 +30,12 @@ pub fn ensure_packages(flake: &Flake, hostname: &str, update: bool) -> miette::R
         let removed_paths = profile.remove_old_packages(&resolved, &flake_attr)?;
         install_new_packages(&package_installable)?;
 
-        let mut diff = String::new();
-        let removed_display = (removed_paths.difference(&missing_paths))
-            .map(|p| format!("- {p}"))
-            .join("\n");
-        if !removed_display.is_empty() {
-            diff.push('\n');
-            diff.push_str(&removed_display.red().to_string());
-        }
+        let removed_paths = removed_paths.difference(&missing_paths).copied().collect();
+        let added_paths = missing_paths;
 
-        let added_display = missing_paths.iter().map(|p| format!("+ {p}")).join("\n");
-        if !added_display.is_empty() {
-            diff.push('\n');
-            diff.push_str(&added_display.green().to_string());
-        }
+        let diff = crate::diff_trees::diff_trees(&removed_paths, &added_paths)?;
 
-        tracing::info!("Updated `nix profile`:{diff}");
+        tracing::info!("Updated `nix profile`:\n{diff}");
     } else {
         tracing::info!(
             "Already up to date:\n{}",
