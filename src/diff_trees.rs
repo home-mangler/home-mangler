@@ -3,7 +3,6 @@ use std::collections::BTreeSet;
 use std::fs::Metadata;
 use std::os::unix::prelude::MetadataExt;
 use std::path::Path;
-use std::path::PathBuf;
 
 use camino::Utf8Path;
 use camino::Utf8PathBuf;
@@ -87,6 +86,7 @@ enum DiffKind {
 #[derive(Debug)]
 struct PathInfo<'a> {
     metadata: Metadata,
+    #[allow(dead_code)]
     base: &'a Utf8Path,
 }
 
