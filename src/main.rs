@@ -9,14 +9,12 @@ mod flake;
 mod format_bulleted_list;
 mod nix;
 mod packages;
-mod symlink;
 mod tracing;
 
 use config::Config;
 
 pub use directories::ProjectPaths;
 pub use format_bulleted_list::format_bulleted_list;
-pub use symlink::read_symlink;
 
 fn main() -> miette::Result<()> {
     let opts = cli::Args::parse();
