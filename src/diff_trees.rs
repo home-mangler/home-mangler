@@ -1,9 +1,6 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
-use std::fs::File;
 use std::fs::Metadata;
-use std::io::BufReader;
-use std::io::Read;
 use std::os::unix::prelude::MetadataExt;
 use std::path::Path;
 
@@ -159,15 +156,7 @@ fn walk_trees<'a>(
                 } else if removed_metadata.is_dir()
                     || candidate_metadata.is_dir()
                     || candidate_metadata.len() != removed_metadata.len()
-                    || !file_contents_same(removed_entry.path(), &candidate).wrap_err_with(
-                        || {
-                            format!(
-                                "Failed to check file contents for {:?} and {:?}",
-                                removed_entry.path(),
-                                candidate
-                            )
-                        },
-                    )?
+                    || hash_file(removed_entry.path())? != hash_file(&candidate)?
                 {
                     DiffKind::Changed
                 } else {
@@ -258,29 +247,12 @@ fn walk_trees<'a>(
     Ok(tree)
 }
 
-fn file_contents_same(path1: impl AsRef<Path>, path2: impl AsRef<Path>) -> miette::Result<bool> {
-    let path1 = path1.as_ref();
-    let path2 = path2.as_ref();
-    tracing::debug!(?path1, ?path2, "Comparing file contents");
-
-    let reader1 = BufReader::new(
-        File::open(path1)
-            .into_diagnostic()
-            .wrap_err_with(|| format!("Failed to open {path1:?}"))?,
-    );
-    let reader2 = BufReader::new(
-        File::open(path2)
-            .into_diagnostic()
-            .wrap_err_with(|| format!("Failed to open {path2:?}"))?,
-    );
-
-    for (byte1, byte2) in reader1.bytes().zip(reader2.bytes()) {
-        let byte1 = byte1.into_diagnostic()?;
-        let byte2 = byte2.into_diagnostic()?;
-        if byte1 != byte2 {
-            return Ok(false);
-        }
-    }
-
-    Ok(true)
+fn hash_file(path: impl AsRef<Path>) -> miette::Result<blake3::Hash> {
+    let path = path.as_ref();
+    tracing::debug!("Hashing {path:?}");
+    Ok(blake3::Hasher::new()
+        .update_mmap(path)
+        .into_diagnostic()
+        .wrap_err_with(|| format!("Failed to hash {path:?}"))?
+        .finalize())
 }
