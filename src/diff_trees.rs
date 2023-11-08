@@ -101,164 +101,183 @@ fn walk_trees<'a>(
     removed_paths: &'a BTreeSet<&'a Utf8Path>,
     added_paths: &'a BTreeSet<&'a Utf8Path>,
 ) -> miette::Result<Diff<'a>> {
-    let mut tree = BTreeMap::new();
+    let mut diff = BTreeMap::new();
 
+    walk_removed_trees(&mut diff, removed_paths, added_paths)?;
+    walk_added_trees(&mut diff, added_paths)?;
+
+    Ok(diff)
+}
+
+fn walk_removed_trees<'a>(
+    diff: &mut Diff<'a>,
+    removed_paths: &'a BTreeSet<&'a Utf8Path>,
+    added_paths: &'a BTreeSet<&'a Utf8Path>,
+) -> miette::Result<()> {
     for removed_base in removed_paths {
-        let walker = WalkDir::new(removed_base).follow_links(true);
-        let mut iterator = walker.into_iter();
-
-        loop {
-            let removed_entry = match iterator.next() {
-                Some(entry) => entry
-                    .into_diagnostic()
-                    .wrap_err_with(|| format!("Failed to traverse {removed_base}")),
-                None => break,
-            }?;
-
-            if removed_entry.depth() == 0 {
-                continue;
-            }
-
-            let relative = removed_entry
-                .path()
-                .strip_prefix(removed_base)
-                .into_diagnostic()
-                .wrap_err_with(|| {
-                    format!(
-                        "Path {:?} doesn't start with {}",
-                        removed_entry.path(),
-                        removed_base
-                    )
-                })?
-                .to_path_buf()
-                .try_conv::<Utf8PathBuf>()
-                .into_diagnostic()?;
-
-            let removed_metadata =
-                removed_entry
-                    .metadata()
-                    .into_diagnostic()
-                    .wrap_err_with(|| {
-                        format!("Failed to query metadata for {:?}", removed_entry.path())
-                    })?;
-
-            let mut entry = FullDiffEntry {
-                kind: DiffKind::Removed,
-                old: None,
-                new: None,
-            };
-            for added_base in added_paths {
-                let candidate = added_base.join(&relative);
-                let candidate_metadata = match candidate.metadata() {
-                    Ok(metadata) => metadata,
-                    Err(err) => {
-                        tracing::debug!(
-                            "Failed to read metadata for candidate path {candidate}: {err}"
-                        );
-                        continue;
-                    }
-                };
-
-                entry.kind = if (candidate_metadata.dev(), candidate_metadata.ino())
-                    == (removed_metadata.dev(), removed_metadata.ino())
-                {
-                    DiffKind::Same
-                } else if removed_metadata.is_dir()
-                    || candidate_metadata.is_dir()
-                    || candidate_metadata.len() != removed_metadata.len()
-                    || hash_file(removed_entry.path())? != hash_file(&candidate)?
-                {
-                    DiffKind::Changed
-                } else {
-                    DiffKind::Same
-                };
-                entry.new = Some(PathInfo {
-                    metadata: candidate_metadata,
-                    base: added_base,
-                });
-
-                break;
-            }
-
-            if removed_entry.file_type().is_dir() {
-                if let DiffKind::Removed = entry.kind {
-                    // Don't recurse if a directory has been removed.
-                    iterator.skip_current_dir();
-                }
-            }
-
-            entry.old = Some(PathInfo {
-                metadata: removed_metadata,
-                base: removed_base,
-            });
-            tree.insert(relative, entry);
-        }
+        walk_removed_tree(diff, removed_base, added_paths)?;
     }
 
-    for added_base in added_paths {
-        let walker = WalkDir::new(added_base).follow_links(true);
-        let mut iterator = walker.into_iter();
+    Ok(())
+}
 
-        loop {
-            let added_entry = match iterator.next() {
-                Some(entry) => entry
-                    .into_diagnostic()
-                    .wrap_err_with(|| format!("Failed to traverse {added_base}")),
-                None => break,
-            }?;
+fn walk_removed_tree<'a>(
+    diff: &mut Diff<'a>,
+    removed_base: &'a Utf8Path,
+    added_paths: &'a BTreeSet<&'a Utf8Path>,
+) -> miette::Result<()> {
+    let walker = WalkDir::new(removed_base).follow_links(true);
+    let mut iterator = walker.into_iter();
 
-            if added_entry.depth() == 0 {
-                continue;
-            }
-
-            let relative = added_entry
-                .path()
-                .strip_prefix(added_base)
+    loop {
+        let removed_entry = match iterator.next() {
+            Some(entry) => entry
                 .into_diagnostic()
-                .wrap_err_with(|| {
-                    format!(
-                        "Path {:?} doesn't start with {}",
-                        added_entry.path(),
-                        added_base
-                    )
-                })?
-                .to_path_buf()
-                .try_conv::<Utf8PathBuf>()
-                .into_diagnostic()?;
+                .wrap_err_with(|| format!("Failed to traverse {removed_base}")),
+            None => break,
+        }?;
 
-            if let Some(diff_entry) = tree.get(&relative) {
-                if let DiffKind::Removed = diff_entry.kind {
-                    // Don't recurse if a directory has been removed.
-                    iterator.skip_current_dir();
+        if removed_entry.depth() == 0 {
+            continue;
+        }
+
+        let relative = strip_prefix(removed_entry.path(), removed_base)?;
+
+        let removed_metadata = removed_entry
+            .metadata()
+            .into_diagnostic()
+            .wrap_err_with(|| format!("Failed to query metadata for {:?}", removed_entry.path()))?;
+
+        let mut entry = FullDiffEntry {
+            kind: DiffKind::Removed,
+            old: None,
+            new: None,
+        };
+        for added_base in added_paths {
+            let candidate = added_base.join(&relative);
+            let candidate_metadata = match candidate.metadata() {
+                Ok(metadata) => metadata,
+                Err(err) => {
+                    tracing::debug!(
+                        "Failed to read metadata for candidate path {candidate}: {err}"
+                    );
                     continue;
                 }
-            } else {
-                if added_entry.file_type().is_dir() {
-                    iterator.skip_current_dir();
-                }
+            };
 
-                tree.insert(
-                    relative,
-                    FullDiffEntry {
-                        kind: DiffKind::Added,
-                        old: None,
-                        new: Some(PathInfo {
-                            metadata: added_entry
-                                .path()
-                                .metadata()
-                                .into_diagnostic()
-                                .wrap_err_with(|| {
-                                    format!("Failed to query metadata for {:?}", added_entry.path())
-                                })?,
-                            base: added_base,
-                        }),
-                    },
-                );
+            entry.kind = candidate_is_same(
+                removed_entry.path(),
+                &removed_metadata,
+                candidate.as_std_path(),
+                &candidate_metadata,
+            )?;
+            entry.new = Some(PathInfo {
+                metadata: candidate_metadata,
+                base: added_base,
+            });
+
+            break;
+        }
+
+        if removed_entry.file_type().is_dir() {
+            if let DiffKind::Removed = entry.kind {
+                // Don't recurse if a directory has been removed.
+                iterator.skip_current_dir();
             }
         }
+
+        entry.old = Some(PathInfo {
+            metadata: removed_metadata,
+            base: removed_base,
+        });
+        diff.insert(relative, entry);
+    }
+    Ok(())
+}
+
+fn walk_added_trees<'a>(
+    diff: &mut Diff<'a>,
+    added_paths: &'a BTreeSet<&'a Utf8Path>,
+) -> miette::Result<()> {
+    for added_base in added_paths {
+        walk_added_tree(diff, added_base)?;
     }
 
-    Ok(tree)
+    Ok(())
+}
+
+fn walk_added_tree<'a>(diff: &mut Diff<'a>, added_base: &'a Utf8Path) -> miette::Result<()> {
+    let walker = WalkDir::new(added_base).follow_links(true);
+    let mut iterator = walker.into_iter();
+
+    loop {
+        let added_entry = match iterator.next() {
+            Some(entry) => entry
+                .into_diagnostic()
+                .wrap_err_with(|| format!("Failed to traverse {added_base}")),
+            None => break,
+        }?;
+
+        if added_entry.depth() == 0 {
+            continue;
+        }
+
+        let relative = strip_prefix(added_entry.path(), added_base)?;
+
+        if let Some(diff_entry) = diff.get(&relative) {
+            if let DiffKind::Removed = diff_entry.kind {
+                // Don't recurse if a directory has been removed.
+                iterator.skip_current_dir();
+                continue;
+            }
+        } else {
+            if added_entry.file_type().is_dir() {
+                iterator.skip_current_dir();
+            }
+
+            diff.insert(
+                relative,
+                FullDiffEntry {
+                    kind: DiffKind::Added,
+                    old: None,
+                    new: Some(PathInfo {
+                        metadata: added_entry
+                            .path()
+                            .metadata()
+                            .into_diagnostic()
+                            .wrap_err_with(|| {
+                                format!("Failed to query metadata for {:?}", added_entry.path())
+                            })?,
+                        base: added_base,
+                    }),
+                },
+            );
+        }
+    }
+    Ok(())
+}
+
+fn candidate_is_same(
+    removed_path: &Path,
+    removed_metadata: &Metadata,
+    candidate_path: &Path,
+    candidate_metadata: &Metadata,
+) -> miette::Result<DiffKind> {
+    Ok(
+        if (candidate_metadata.dev(), candidate_metadata.ino())
+            == (removed_metadata.dev(), removed_metadata.ino())
+        {
+            DiffKind::Same
+        } else if removed_metadata.is_dir()
+            || candidate_metadata.is_dir()
+            || candidate_metadata.len() != removed_metadata.len()
+            || hash_file(removed_path)? != hash_file(candidate_path)?
+        {
+            DiffKind::Changed
+        } else {
+            DiffKind::Same
+        },
+    )
 }
 
 fn hash_file(path: impl AsRef<Path>) -> miette::Result<blake3::Hash> {
@@ -269,4 +288,14 @@ fn hash_file(path: impl AsRef<Path>) -> miette::Result<blake3::Hash> {
         .into_diagnostic()
         .wrap_err_with(|| format!("Failed to hash {path:?}"))?
         .finalize())
+}
+
+fn strip_prefix(path: &Path, prefix: impl AsRef<Path>) -> miette::Result<Utf8PathBuf> {
+    let prefix = prefix.as_ref();
+    path.strip_prefix(prefix)
+        .into_diagnostic()
+        .wrap_err_with(|| format!("Path {path:?} doesn't start with {prefix:?}",))?
+        .to_path_buf()
+        .try_conv::<Utf8PathBuf>()
+        .into_diagnostic()
 }
