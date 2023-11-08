@@ -31,15 +31,17 @@ fn main() -> miette::Result<()> {
     let config = Config::from_args(opts)?;
     tracing::update_log_filters(&filter_reload, &config.log_filter())?;
 
+    // let removed = "/nix/store/1w39p07mws3zv6skf3p40ilw8bma7f5h-home-mangler-packages";
+    // let added = "/nix/store/rgy242kgmadxi607qkq3iij8ppbckzc0-home-mangler-packages";
+
+    let removed = "/nix/store/lq7wg8zi6qxs1plj00pgdhc4lblbhc1m-home-mangler-packages";
+    let added = "/nix/store/3qzz3990l72789sspp275cb6acjb06wm-home-mangler-packages";
+
     println!(
         "{}",
         diff_trees::diff_trees(
-            &BTreeSet::from([Utf8Path::new(
-                "/nix/store/1w39p07mws3zv6skf3p40ilw8bma7f5h-home-mangler-packages"
-            )]),
-            &BTreeSet::from([Utf8Path::new(
-                "/nix/store/rgy242kgmadxi607qkq3iij8ppbckzc0-home-mangler-packages"
-            )])
+            &BTreeSet::from([Utf8Path::new(removed)]),
+            &BTreeSet::from([Utf8Path::new(added)])
         )?
     );
     return Ok(());
