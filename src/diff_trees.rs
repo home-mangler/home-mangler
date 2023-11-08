@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use std::fs::Metadata;
 use std::os::unix::prelude::MetadataExt;
 use std::path::Path;
+use std::path::PathBuf;
 
 use camino::Utf8Path;
 use camino::Utf8PathBuf;
@@ -24,6 +25,7 @@ pub fn diff_trees(
 
 fn display_diff(diff: &Diff) -> String {
     let mut ret = String::new();
+    let mut changed_entries = 0;
 
     for (path, entry) in diff {
         match entry.kind {
@@ -35,6 +37,7 @@ fn display_diff(diff: &Diff) -> String {
                         .to_string(),
                 );
                 ret.push('\n');
+                changed_entries += 1;
             }
             DiffKind::Removed => {
                 ret.push_str(
@@ -43,6 +46,7 @@ fn display_diff(diff: &Diff) -> String {
                         .to_string(),
                 );
                 ret.push('\n');
+                changed_entries += 1;
             }
             DiffKind::Changed => {
                 if entry
@@ -60,15 +64,19 @@ fn display_diff(diff: &Diff) -> String {
                         .to_string(),
                 );
                 ret.push('\n');
+                changed_entries += 1;
             }
         }
     }
+
+    tracing::debug!("{changed_entries} entries updated");
 
     ret
 }
 
 type Diff<'a> = BTreeMap<Utf8PathBuf, FullDiffEntry<'a>>;
 
+#[derive(Debug)]
 enum DiffKind {
     Same,
     Removed,
@@ -76,11 +84,13 @@ enum DiffKind {
     Added,
 }
 
+#[derive(Debug)]
 struct PathInfo<'a> {
     metadata: Metadata,
     base: &'a Utf8Path,
 }
 
+#[derive(Debug)]
 struct FullDiffEntry<'a> {
     kind: DiffKind,
     old: Option<PathInfo<'a>>,
@@ -223,6 +233,10 @@ fn walk_trees<'a>(
                     continue;
                 }
             } else {
+                if added_entry.file_type().is_dir() {
+                    iterator.skip_current_dir();
+                }
+
                 tree.insert(
                     relative,
                     FullDiffEntry {
