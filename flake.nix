@@ -36,15 +36,21 @@
       in
         pkgs.callPackage ./nix/makeLib.nix {});
 
-    packages = eachSystem (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
-      inherit (pkgs) lib;
-      packages = pkgs.callPackage ./nix/makePackages.nix {inherit inputs;};
-    in
-      (lib.filterAttrs (name: value: lib.isDerivation value) packages)
+    packages =
+      (eachSystem (system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+        inherit (pkgs) lib;
+        packages = pkgs.callPackage ./nix/makePackages.nix {inherit inputs;};
+      in
+        (lib.filterAttrs (name: value: lib.isDerivation value) packages)
+        // {
+          default = packages.home-mangler;
+        }))
       // {
-        default = packages.home-mangler;
-      });
+        aarch64-darwin.test-vm = self.nixosConfigurations.test-aarch64-darwin.config.system.build.vm;
+        aarch64-linux.test-vm = self.nixosConfigurations.test-aarch64-linux.config.system.build.vm;
+        x86_64-linux.test-vm = self.nixosConfigurations.test-x86_64-linux.config.system.build.vm;
+      };
 
     checks = eachSystem (system: self.packages.${system}.home-mangler.checks);
 
@@ -56,6 +62,30 @@
       packages = final.callPackage ./nix/makePackages.nix {inherit inputs;};
     in {
       inherit (packages) home-mangler;
+    };
+
+    nixosConfigurations.test-aarch64-darwin = nixpkgs.lib.nixosSystem {
+      system = "aarch64-linux";
+      modules = [
+        ./test-data/configuration.nix
+        {
+          virtualisation.vmVariant.virtualisation.host.pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+        }
+      ];
+    };
+
+    nixosConfigurations.test-aarch64-linux = nixpkgs.lib.nixosSystem {
+      system = "aarch64-linux";
+      modules = [
+        ./test-data/configuration.nix
+      ];
+    };
+
+    nixosConfigurations.test-x86_64-linux = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ./test-data/configuration.nix
+      ];
     };
   };
 }

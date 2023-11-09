@@ -8,3 +8,4 @@ builds:
     - 'packages.aarch64-darwin.*'
     - 'checks.x86_64-linux.*'
     - 'checks.aarch64-darwin.*'
+    - 'nixosConfigurations.*'
