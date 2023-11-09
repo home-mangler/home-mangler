@@ -24,5 +24,15 @@
         ];
       };
     });
+
+    nixosConfigurations.test = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ./configuration.nix
+        {
+          virtualisation.vmVariant.virtualisation.host.pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+        }
+      ];
+    };
   };
 }
