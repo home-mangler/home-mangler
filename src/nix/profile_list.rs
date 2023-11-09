@@ -5,14 +5,18 @@ use serde_json::Value as Json;
 
 use crate::command_ext::CommandExt;
 
-pub fn profile_list() -> miette::Result<ProfileList> {
-    let json_output = super::nix_command()
-        .args(["profile", "list", "--json"])
-        .stdout_checked_utf8()?;
+use super::Nix;
 
-    let data: ProfileListUnknown = serde_json::from_str(&json_output).into_diagnostic()?;
+impl Nix {
+    pub fn profile_list(&self) -> miette::Result<ProfileList> {
+        let json_output = self
+            .command(&["profile", "list"])
+            .arg("--json")
+            .stdout_checked_utf8()?;
 
-    match data.version {
+        let data: ProfileListUnknown = serde_json::from_str(&json_output).into_diagnostic()?;
+
+        match data.version {
         2 => {
             let data_v2: ProfileListV2 = serde_json::from_value(data.rest).into_diagnostic()?;
             Ok(ProfileList::V2(data_v2.elements))
@@ -20,6 +24,7 @@ pub fn profile_list() -> miette::Result<ProfileList> {
         version => {
             Err(miette!("Unknown `nix profile list --json` output version {version}; I only know how to interpret output for version 2"))
         }
+    }
     }
 }
 

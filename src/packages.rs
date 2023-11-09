@@ -7,13 +7,18 @@ use miette::Context;
 use crate::command_ext::CommandExt;
 use crate::flake::Flake;
 use crate::format_bulleted_list;
-use crate::nix;
+use crate::nix::Nix;
 use crate::nix::ProfileList;
 use crate::nix::ResolvedFlake;
 
-pub fn ensure_packages(flake: &Flake, hostname: &str, update: bool) -> miette::Result<()> {
+pub fn ensure_packages(
+    nix: &Nix,
+    flake: &Flake,
+    hostname: &str,
+    update: bool,
+) -> miette::Result<()> {
     if update {
-        nix::flake_update(flake)
+        nix.flake_update(flake)
             .wrap_err_with(|| format!("Failed to update `flake.lock` for {flake}"))?;
     }
 
@@ -21,14 +26,18 @@ pub fn ensure_packages(flake: &Flake, hostname: &str, update: bool) -> miette::R
     let package_installable = format!("{flake}#{flake_attr}");
 
     // TODO: We have a few things we could run in separate threads here.
-    let resolved = nix::resolve(flake.clone())?;
+    let resolved = nix.resolve(flake.clone())?;
 
-    let package_out_paths = nix::build(&package_installable)?;
-    let profile = nix::profile_list()?;
+    let package_out_paths = nix.build(&package_installable)?;
+    let profile = nix.profile_list()?;
     let missing_paths = profile.missing_paths(&package_out_paths)?;
     if !missing_paths.is_empty() {
-        let removed_paths = profile.remove_old_packages(&resolved, &flake_attr)?;
-        install_new_packages(&package_installable)?;
+        let removed_paths = profile.remove_old_packages(nix, &resolved, &flake_attr)?;
+        tracing::info!(
+            "Installing new packages to `nix profile`:\n{}",
+            format_bulleted_list(&missing_paths)
+        );
+        install_new_packages(nix, &package_installable)?;
 
         let removed_paths = removed_paths.difference(&missing_paths).copied().collect();
         let added_paths = missing_paths;
@@ -69,6 +78,7 @@ impl ProfileList {
 
     pub fn remove_old_packages(
         &self,
+        nix: &Nix,
         flake: &ResolvedFlake,
         attr_path: &str,
     ) -> miette::Result<BTreeSet<&Utf8Path>> {
@@ -94,8 +104,7 @@ impl ProfileList {
                 "Removing old packages from `nix profile`:\n{}",
                 format_bulleted_list(&paths_to_remove)
             );
-            nix::nix_command()
-                .args(["profile", "remove"])
+            nix.command(&["profile", "remove"])
                 .args(indices_to_remove.iter().map(|i| i.to_string()))
                 .status_checked()?;
         }
@@ -104,9 +113,8 @@ impl ProfileList {
     }
 }
 
-fn install_new_packages(flake_ref: &str) -> miette::Result<()> {
-    tracing::info!("Installing new packages");
-    nix::nix_command()
-        .args(["profile", "install", "--print-build-logs", flake_ref])
+fn install_new_packages(nix: &Nix, flake_ref: &str) -> miette::Result<()> {
+    nix.command(&["profile", "install"])
+        .args(["--print-build-logs", flake_ref])
         .status_checked()
 }
