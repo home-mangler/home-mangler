@@ -1,3 +1,5 @@
+use std::process::Output;
+
 use assert_cmd::Command;
 use assert_fs::fixture::PathCopy;
 use assert_fs::TempDir;
@@ -25,4 +27,19 @@ impl Session {
 
 pub fn session() -> Session {
     Session::new()
+}
+
+pub trait OutputExt {
+    fn stdout_utf8(&self) -> String;
+    fn stderr_utf8(&self) -> String;
+}
+
+impl OutputExt for Output {
+    fn stdout_utf8(&self) -> String {
+        String::from_utf8(self.stdout.clone()).unwrap()
+    }
+
+    fn stderr_utf8(&self) -> String {
+        String::from_utf8(self.stderr.clone()).unwrap()
+    }
 }

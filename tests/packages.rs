@@ -1,3 +1,6 @@
+use expect_test::expect;
+use harness::OutputExt;
+
 mod harness;
 
 #[test]
@@ -15,8 +18,5 @@ fn packages1() {
             "config.toml",
         ])
         .assert();
-    println!(
-        "{}",
-        String::from_utf8(cmd.get_output().stdout.clone()).unwrap()
-    );
+    expect![""].assert_eq(&cmd.get_output().stdout_utf8());
 }
