@@ -13,8 +13,10 @@ pub struct Session {
 impl Session {
     pub fn new() -> Self {
         let temp = assert_fs::fixture::TempDir::new().unwrap();
-        temp.copy_from(TEST_DATA_PATH, &["flake.nix", "flake.lock"])
-            .unwrap();
+        temp.copy_from(TEST_DATA_PATH, &["**/*"]).unwrap();
+
+        let temp = temp.into_persistent();
+
         let mut cmd = Command::from_std(test_bin::get_test_bin("home-mangler"));
         cmd.current_dir(&temp);
         Session { temp, cmd }
