@@ -10,8 +10,19 @@
     self,
     nixpkgs,
     home-mangler,
-  }: {
-    home-mangler = {
-    };
+  }: let
+    forAllSystems = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed;
+  in {
+    home-mangler = forAllSystems (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+      home-mangler-lib = home-mangler.lib.${system};
+      inherit (home-mangler-lib) makeConfiguration;
+    in {
+      packages1 = makeConfiguration {
+        packages = [
+          pkgs.git
+        ];
+      };
+    });
   };
 }
