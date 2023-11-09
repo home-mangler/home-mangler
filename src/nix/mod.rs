@@ -28,6 +28,7 @@ impl Nix {
         let mut command = Command::new("nix");
         command.args(["--extra-experimental-features", "nix-command"]);
         command.args(subcommand);
+        #[allow(clippy::single_match)]
         match subcommand {
             ["profile", _] => {
                 if let Some(profile) = &self.profile {
