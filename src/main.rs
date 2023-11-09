@@ -26,10 +26,11 @@ fn main() -> miette::Result<()> {
     let config = Config::from_args(opts)?;
     tracing::update_log_filters(&filter_reload, &config.log_filter())?;
 
+    let nix = config.nix();
     let flake = config.flake()?;
     let hostname = config.hostname()?;
     ::tracing::debug!(%flake, %hostname, "Resolved configuration");
-    packages::ensure_packages(&flake, &hostname, config.update())?;
+    packages::ensure_packages(&nix, &flake, &hostname, config.update())?;
 
     Ok(())
 }

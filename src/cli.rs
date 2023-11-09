@@ -43,6 +43,10 @@ pub struct Args {
     #[arg(long)]
     pub update: bool,
 
+    /// Profile to use for `nix profile` operations.
+    #[arg(long, env = "NIX_PROFILE")]
+    pub profile: Option<Utf8PathBuf>,
+
     /// The hostname to build the configuration for.
     ///
     /// This corresponds to the `home-mangler.${hostname}` output attribute in your flake.

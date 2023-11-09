@@ -7,6 +7,7 @@ use miette::IntoDiagnostic;
 use crate::cli::Args;
 use crate::flake::Flake;
 use crate::format_bulleted_list;
+use crate::nix::Nix;
 use crate::ProjectPaths;
 
 #[derive(serde::Deserialize)]
@@ -30,6 +31,7 @@ pub struct ConfigFile {
     flake: Option<String>,
     update: Option<bool>,
     use_path_flake: Option<bool>,
+    profile: Option<Utf8PathBuf>,
 }
 
 impl ConfigFile {
@@ -161,5 +163,14 @@ impl Config {
                 .into_string()
                 .map_err(|s| miette!("Hostname is not UTF-8: {s:?}")),
         }
+    }
+
+    pub fn nix(&self) -> Nix {
+        Nix::default().with_profile(
+            self.args
+                .profile
+                .clone()
+                .or_else(|| self.file.profile.clone()),
+        )
     }
 }
