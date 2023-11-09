@@ -30,6 +30,7 @@ fn display_diff(diff: &Diff) -> String {
         match entry.kind {
             DiffKind::Same => {}
             DiffKind::Added => {
+                let path = entry.format_path(path);
                 ret.push_str(
                     &format!("+ {path}")
                         .if_supports_color(Stream::Stdout, |text| text.green())
@@ -39,6 +40,7 @@ fn display_diff(diff: &Diff) -> String {
                 changed_entries += 1;
             }
             DiffKind::Removed => {
+                let path = entry.format_path(path);
                 ret.push_str(
                     &format!("- {path}")
                         .if_supports_color(Stream::Stdout, |text| text.red())
@@ -48,15 +50,11 @@ fn display_diff(diff: &Diff) -> String {
                 changed_entries += 1;
             }
             DiffKind::Changed => {
-                if entry
-                    .new
-                    .as_ref()
-                    .map(|info| info.metadata.is_dir())
-                    .unwrap_or(false)
-                {
+                if entry.is_dir() {
                     continue;
                 }
 
+                let path = entry.format_path(path);
                 ret.push_str(
                     &format!("~ {path}")
                         .if_supports_color(Stream::Stdout, |text| text.yellow())
@@ -95,6 +93,24 @@ struct FullDiffEntry<'a> {
     kind: DiffKind,
     old: Option<PathInfo<'a>>,
     new: Option<PathInfo<'a>>,
+}
+
+impl<'a> FullDiffEntry<'a> {
+    fn is_dir(&self) -> bool {
+        self.new
+            .as_ref()
+            .or(self.old.as_ref())
+            .map(|info| info.metadata.is_dir())
+            .unwrap_or(false)
+    }
+
+    fn format_path(&self, path: &Utf8Path) -> String {
+        let mut ret = path.to_string();
+        if self.is_dir() {
+            ret.push('/');
+        }
+        ret
+    }
 }
 
 fn walk_trees<'a>(
