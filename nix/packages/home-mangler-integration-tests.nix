@@ -57,6 +57,8 @@
     environment.variables = {
       HOME_MANGLER_NIXOS_INTEGRATION_TEST = "1";
     };
+
+    networking.firewall.allowedTCPPorts = [80];
   };
 
   testModule = {
