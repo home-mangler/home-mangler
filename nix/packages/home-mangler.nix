@@ -7,6 +7,7 @@
   inputs,
   rustPlatform,
   rust-analyzer,
+  home-mangler-integration-tests,
 }: let
   inherit (inputs) crane advisory-db;
   craneLib = crane.lib.${system};
@@ -35,9 +36,12 @@
     };
 
   checks = {
+    inherit home-mangler-integration-tests;
     home-mangler-tests = craneLib.cargoNextest (commonArgs
       // {
         NEXTEST_HIDE_PROGRESS_BAR = "true";
+        NEXTEST_PROFILE = "ci";
+        cargoNextestExtraArgs = "--filter-expr '!kind(test)'";
       });
     home-mangler-clippy = craneLib.cargoClippy (commonArgs
       // {

@@ -36,15 +36,17 @@
       in
         pkgs.callPackage ./nix/makeLib.nix {});
 
-    packages = eachSystem (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
-      inherit (pkgs) lib;
-      packages = pkgs.callPackage ./nix/makePackages.nix {inherit inputs;};
-    in
-      (lib.filterAttrs (name: value: lib.isDerivation value) packages)
-      // {
-        default = packages.home-mangler;
-      });
+    packages = eachSystem (
+      system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+        inherit (pkgs) lib;
+        packages = pkgs.callPackage ./nix/makePackages.nix {inherit inputs;};
+      in
+        (lib.filterAttrs (name: value: lib.isDerivation value) packages)
+        // {
+          default = packages.home-mangler;
+        }
+    );
 
     checks = eachSystem (system: self.packages.${system}.home-mangler.checks);
 
