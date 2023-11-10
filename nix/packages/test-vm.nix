@@ -31,9 +31,11 @@
     # Make VM output to the terminal instead of a separate window
     virtualisation.vmVariant.virtualisation.graphics = false;
 
-    environment.etc.home-mangler-test-data = {
-      mode = "symlink";
-      source = ../../test-data;
+    environment.etc = {
+      home-mangler-src = {
+        mode = "symlink";
+        source = ../../.;
+      };
     };
 
     environment.variables = {
