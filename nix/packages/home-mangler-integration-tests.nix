@@ -53,5 +53,6 @@ in
       print("hello!")
       test.wait_for_unit("default.target")
       test.succeed("su -- alice -c 'which home-mangler'")
+      # cargo nextest run --filter-expr 'kind(test)'
     '';
   }

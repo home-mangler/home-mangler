@@ -40,6 +40,8 @@
     home-mangler-tests = craneLib.cargoNextest (commonArgs
       // {
         NEXTEST_HIDE_PROGRESS_BAR = "true";
+        NEXTEST_PROFILE = "ci";
+        cargoNextestExtraArgs = "--filter-expr '!kind(test)'";
       });
     home-mangler-clippy = craneLib.cargoClippy (commonArgs
       // {
