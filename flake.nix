@@ -28,25 +28,6 @@
     advisory-db,
   }: let
     eachSystem = nixpkgs.lib.genAttrs (import systems);
-    testVM = {
-      system,
-      hostSystem ? system,
-    }: let
-      modules =
-        [
-          ./test-data/configuration.nix
-        ]
-        ++ nixpkgs.lib.optional (system != hostSystem) {
-          virtualisation.vmVariant.virtualisation.host.pkgs = nixpkgs.legacyPackages.${hostSystem};
-        };
-    in
-      (nixpkgs.lib.nixosSystem {
-        inherit system modules;
-      })
-      .config
-      .system
-      .build
-      .vm;
   in {
     lib =
       eachSystem
@@ -64,13 +45,6 @@
         (lib.filterAttrs (name: value: lib.isDerivation value) packages)
         // {
           default = packages.home-mangler;
-          test-vm = testVM {
-            system =
-              if system == "aarch64-darwin"
-              then "aarch64-linux"
-              else system;
-            hostSystem = system;
-          };
         }
     );
 
