@@ -6,6 +6,7 @@ use assert_fs::TempDir;
 
 /// Test data flake path, relative the directory containing `Cargo.toml`.
 const TEST_DATA_PATH: &str = "test-data/";
+const TEST_ENV_VAR: &str = "HOME_MANGLER_NIXOS_INTEGRATION_TEST";
 
 pub struct Session {
     pub temp: TempDir,
@@ -14,12 +15,16 @@ pub struct Session {
 
 impl Session {
     pub fn new() -> Self {
+        if std::env::var(TEST_ENV_VAR).is_err() {
+            panic!("${TEST_ENV_VAR} is not set; `home-mangler` integration tests can only be run in a NixOS VM");
+        }
+
         let temp = assert_fs::fixture::TempDir::new().unwrap();
         temp.copy_from(TEST_DATA_PATH, &["**/*"]).unwrap();
 
         let temp = temp.into_persistent();
 
-        let mut cmd = Command::from_std(test_bin::get_test_bin("home-mangler"));
+        let mut cmd = Command::new("home-mangler");
         cmd.current_dir(&temp);
         Session { temp, cmd }
     }

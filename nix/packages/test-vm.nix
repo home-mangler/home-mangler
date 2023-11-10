@@ -20,6 +20,9 @@
       isNormalUser = true;
       extraGroups = ["wheel"];
       initialPassword = "password";
+      packages = let
+        home-mangler-pkgs = pkgs.callPackage ../makePackages.nix {inherit inputs;};
+      in [home-mangler-pkgs.home-mangler];
     };
 
     # Enable passwordless `sudo`.
@@ -27,6 +30,15 @@
 
     # Make VM output to the terminal instead of a separate window
     virtualisation.vmVariant.virtualisation.graphics = false;
+
+    environment.etc.home-mangler-test-data = {
+      mode = "symlink";
+      source = ../../test-data;
+    };
+
+    environment.variables = {
+      HOME_MANGLER_NIXOS_INTEGRATION_TEST = true;
+    };
   };
 
   modules =
