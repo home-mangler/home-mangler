@@ -4,8 +4,8 @@ use assert_cmd::Command;
 use assert_fs::fixture::PathCopy;
 use assert_fs::TempDir;
 
-/// Test data flake path, relative the directory containing `Cargo.toml`.
-const TEST_DATA_PATH: &str = "test-data/";
+/// Test data flake path.
+const TEST_DATA_PATH: &str = "/etc/home-mangler-test-data";
 const TEST_ENV_VAR: &str = "HOME_MANGLER_NIXOS_INTEGRATION_TEST";
 
 pub struct Session {
