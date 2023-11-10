@@ -1,18 +1,27 @@
 {
+  pkgs,
   system,
+  stdenv,
   inputs,
   lib,
-  nixosTest,
 }: let
-  vmSystem =
-    if system == "aarch64-darwin"
-    then "aarch64-linux"
-    else system;
+  inherit (inputs.nixpkgs.lib) nixos;
+
+  hostPkgs = pkgs;
+
+  nodePkgs = let
+    nodeSystem =
+      {
+        aarch64-darwin = "aarch64-linux";
+        x86_64-darwin = "x86_64-linux";
+      }
+      .${system}
+      or system;
+  in
+    inputs.nixpkgs.legacyPackages.${nodeSystem};
 
   configuration = {pkgs, ...}: {
-    imports = lib.optional (system != vmSystem) {
-      virtualisation.vmVariant.virtualisation.host.pkgs = inputs.nixpkgs.legacyPackages.${system};
-    };
+    virtualisation.host = lib.optionalAttrs stdenv.isDarwin {pkgs = hostPkgs;};
 
     system.stateVersion = "23.11";
     boot.loader.systemd-boot.enable = true;
@@ -49,8 +58,8 @@
       HOME_MANGLER_NIXOS_INTEGRATION_TEST = "1";
     };
   };
-in
-  nixosTest {
+
+  testModule = {
     name = "home-mangler-integration-tests";
     nodes.test = configuration;
     testScript = ''
@@ -58,4 +67,12 @@ in
       test.succeed("su -- test -c 'cp -r /etc/home-mangler-src ~/home-mangler'")
       test.succeed("su -- test -c 'cd ~/home-mangler && cargo nextest run --filter-expr \"kind(test)\"'")
     '';
+  };
+in
+  nixos.runTest {
+    inherit hostPkgs;
+    node.pkgs = nodePkgs;
+    imports = [
+      testModule
+    ];
   }
