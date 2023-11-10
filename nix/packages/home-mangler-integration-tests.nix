@@ -25,7 +25,11 @@
       initialPassword = "password";
       packages = let
         home-mangler-pkgs = pkgs.callPackage ../makePackages.nix {inherit inputs;};
-      in [home-mangler-pkgs.home-mangler];
+      in [
+        home-mangler-pkgs.home-mangler
+        pkgs.cargo
+        pkgs.cargo-nextest
+      ];
     };
 
     # Enable passwordless `sudo`.
@@ -50,9 +54,8 @@ in
     name = "home-mangler-integration-tests";
     nodes.test = configuration;
     testScript = ''
-      print("hello!")
       test.wait_for_unit("default.target")
-      test.succeed("su -- test -c 'which home-mangler'")
-      # cargo nextest run --filter-expr 'kind(test)'
+      test.succeed("su -- test -c 'cp -r /etc/home-mangler-src ~/home-mangler'")
+      test.succeed("su -- test -c 'cd ~/home-mangler && cargo nextest run --filter-expr kind(test)'")
     '';
   }
