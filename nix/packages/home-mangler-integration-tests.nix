@@ -42,7 +42,7 @@
     };
 
     environment.variables = {
-      HOME_MANGLER_NIXOS_INTEGRATION_TEST = true;
+      HOME_MANGLER_NIXOS_INTEGRATION_TEST = "1";
     };
   };
 in
@@ -52,7 +52,7 @@ in
     testScript = ''
       print("hello!")
       test.wait_for_unit("default.target")
-      test.succeed("su -- alice -c 'which home-mangler'")
+      test.succeed("su -- test -c 'which home-mangler'")
       # cargo nextest run --filter-expr 'kind(test)'
     '';
   }
