@@ -56,6 +56,6 @@ in
     testScript = ''
       test.wait_for_unit("default.target")
       test.succeed("su -- test -c 'cp -r /etc/home-mangler-src ~/home-mangler'")
-      test.succeed("su -- test -c 'cd ~/home-mangler && cargo nextest run --filter-expr kind(test)'")
+      test.succeed("su -- test -c 'cd ~/home-mangler && cargo nextest run --filter-expr \"kind(test)\"'")
     '';
   }
