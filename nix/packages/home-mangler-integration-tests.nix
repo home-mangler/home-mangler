@@ -2,15 +2,18 @@
   system,
   inputs,
   lib,
+  nixosTest,
 }: let
-  inherit (inputs.nixpkgs.lib) nixosSystem;
-
   vmSystem =
     if system == "aarch64-darwin"
     then "aarch64-linux"
     else system;
 
   configuration = {pkgs, ...}: {
+    imports = lib.optional (system != vmSystem) {
+      virtualisation.vmVariant.virtualisation.host.pkgs = inputs.nixpkgs.legacyPackages.${system};
+    };
+
     system.stateVersion = "23.11";
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
@@ -42,18 +45,13 @@
       HOME_MANGLER_NIXOS_INTEGRATION_TEST = true;
     };
   };
-
-  modules =
-    [configuration]
-    ++ lib.optional (system != vmSystem) {
-      virtualisation.vmVariant.virtualisation.host.pkgs = inputs.nixpkgs.legacyPackages.${system};
-    };
 in
-  (nixosSystem {
-    system = vmSystem;
-    inherit modules;
-  })
-  .config
-  .system
-  .build
-  .vm
+  nixosTest {
+    name = "home-mangler-integration-tests";
+    nodes.test = configuration;
+    testScript = ''
+      print("hello!")
+      test.wait_for_unit("default.target")
+      test.succeed("su -- alice -c 'which home-mangler'")
+    '';
+  }
