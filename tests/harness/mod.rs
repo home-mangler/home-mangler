@@ -19,6 +19,18 @@ impl Session {
             panic!("${TEST_ENV_VAR} is not set; `home-mangler` integration tests can only be run in a NixOS VM");
         }
 
+        // Clear the profile before starting.
+        Command::new("nix")
+            .args([
+                "--extra-experimental-features",
+                "nix-command flakes",
+                "profile",
+                "remove",
+                ".*",
+            ])
+            .assert()
+            .success();
+
         let temp = assert_fs::fixture::TempDir::new().unwrap();
         temp.copy_from(TEST_DATA_PATH, &["**/*"]).unwrap();
 
