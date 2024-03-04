@@ -6,7 +6,7 @@ use super::Nix;
 impl Nix {
     /// Update a flake lockfile.
     pub fn flake_update(&self, flake: &Flake) -> miette::Result<()> {
-        self.command(&["flake", "update"])
+        self.command(&["flake", "update", "--flake"])
             .arg(&flake.to_string())
             .status_checked()
     }
