@@ -3,10 +3,8 @@ use std::process::Command;
 mod profile_list;
 use camino::Utf8PathBuf;
 pub use profile_list::ProfileList;
-pub use profile_list::ProfileListV2Element;
 
 mod flake_metadata;
-pub use flake_metadata::FlakeMetadata;
 pub use flake_metadata::ResolvedFlake;
 
 mod build;
