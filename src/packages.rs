@@ -64,7 +64,7 @@ impl ProfileList {
             out_paths.iter().map(|p| p.as_path()).collect();
 
         match &self {
-            ProfileList::V2(packages) => {
+            ProfileList::V3(packages) => {
                 for package in packages {
                     for store_path in &package.store_paths {
                         uninstalled_paths.remove(store_path.as_path());
@@ -85,7 +85,7 @@ impl ProfileList {
         let mut indices_to_remove = vec![];
         let mut paths_to_remove = BTreeSet::new();
         match &self {
-            ProfileList::V2(packages) => {
+            ProfileList::V3(packages) => {
                 for (i, package) in packages.iter().enumerate() {
                     if package.attr_path.as_deref() == Some(attr_path)
                         && package.original_url.as_deref()
