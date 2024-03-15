@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use camino::Utf8PathBuf;
 use miette::miette;
 use miette::IntoDiagnostic;
@@ -17,20 +19,28 @@ impl Nix {
         let data: ProfileListUnknown = serde_json::from_str(&json_output).into_diagnostic()?;
 
         match data.version {
-        1..=3 => {
+        1..=2 => {
+            let data: ProfileListV2 = serde_json::from_value(data.rest).into_diagnostic()?;
+            Ok(ProfileList::V2(data.elements))
+        }
+        3 => {
             let data: ProfileListV3 = serde_json::from_value(data.rest).into_diagnostic()?;
             Ok(ProfileList::V3(data.elements))
         }
         version => {
-            Err(miette!("Unknown `nix profile list --json` output version {version}; I only know how to interpret output for version 2"))
+            Err(miette!("Unknown `nix profile list --json` output version {version}; I only know how to interpret output for versions 1 through 3"))
         }
     }
     }
 }
 
 pub enum ProfileList {
-    /// Versions 1-3.
-    V3(Vec<ProfileListV3Element>),
+    /// Versions 1-2.
+    V2(Vec<ProfileListV3Element>),
+    /// Version 3.
+    ///
+    /// Map from names to elements.
+    V3(BTreeMap<String, ProfileListV3Element>),
 }
 
 #[derive(serde::Deserialize)]
@@ -41,8 +51,13 @@ struct ProfileListUnknown {
 }
 
 #[derive(serde::Deserialize)]
-struct ProfileListV3 {
+struct ProfileListV2 {
     elements: Vec<ProfileListV3Element>,
+}
+
+#[derive(serde::Deserialize)]
+struct ProfileListV3 {
+    elements: BTreeMap<String, ProfileListV3Element>,
 }
 
 /// `nix profile list --json` element for versions 1-3.

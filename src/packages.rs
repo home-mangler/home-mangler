@@ -64,8 +64,15 @@ impl ProfileList {
             out_paths.iter().map(|p| p.as_path()).collect();
 
         match &self {
-            ProfileList::V3(packages) => {
+            ProfileList::V2(packages) => {
                 for package in packages {
+                    for store_path in &package.store_paths {
+                        uninstalled_paths.remove(store_path.as_path());
+                    }
+                }
+            }
+            ProfileList::V3(packages) => {
+                for package in packages.values() {
                     for store_path in &package.store_paths {
                         uninstalled_paths.remove(store_path.as_path());
                     }
@@ -82,30 +89,41 @@ impl ProfileList {
         flake: &ResolvedFlake,
         attr_path: &str,
     ) -> miette::Result<BTreeSet<&Utf8Path>> {
-        let mut indices_to_remove = vec![];
+        let mut elements_to_remove = vec![];
         let mut paths_to_remove = BTreeSet::new();
         match &self {
-            ProfileList::V3(packages) => {
+            ProfileList::V2(packages) => {
                 for (i, package) in packages.iter().enumerate() {
                     if package.attr_path.as_deref() == Some(attr_path)
                         && package.original_url.as_deref()
                             == Some(flake.metadata.original_url.as_str())
                     {
-                        indices_to_remove.push(i);
+                        elements_to_remove.push(i.to_string());
+                        paths_to_remove.extend(package.store_paths.iter().map(|p| p.as_path()));
+                    }
+                }
+            }
+            ProfileList::V3(packages) => {
+                for (name, package) in packages {
+                    if package.attr_path.as_deref() == Some(attr_path)
+                        && package.original_url.as_deref()
+                            == Some(flake.metadata.original_url.as_str())
+                    {
+                        elements_to_remove.push(name.clone());
                         paths_to_remove.extend(package.store_paths.iter().map(|p| p.as_path()));
                     }
                 }
             }
         }
 
-        if !indices_to_remove.is_empty() {
+        if !elements_to_remove.is_empty() {
             // TODO: Confirm before removing.
             tracing::info!(
                 "Removing old packages from `nix profile`:\n{}",
                 format_bulleted_list(&paths_to_remove)
             );
             nix.command(&["profile", "remove"])
-                .args(indices_to_remove.iter().map(|i| i.to_string()))
+                .args(elements_to_remove.iter().map(|element| element.to_string()))
                 .status_checked()?;
         }
 
