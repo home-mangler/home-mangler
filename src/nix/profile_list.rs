@@ -17,9 +17,9 @@ impl Nix {
         let data: ProfileListUnknown = serde_json::from_str(&json_output).into_diagnostic()?;
 
         match data.version {
-        2 => {
-            let data_v2: ProfileListV2 = serde_json::from_value(data.rest).into_diagnostic()?;
-            Ok(ProfileList::V2(data_v2.elements))
+        1..=3 => {
+            let data: ProfileListV3 = serde_json::from_value(data.rest).into_diagnostic()?;
+            Ok(ProfileList::V3(data.elements))
         }
         version => {
             Err(miette!("Unknown `nix profile list --json` output version {version}; I only know how to interpret output for version 2"))
@@ -29,7 +29,8 @@ impl Nix {
 }
 
 pub enum ProfileList {
-    V2(Vec<ProfileListV2Element>),
+    /// Versions 1-3.
+    V3(Vec<ProfileListV3Element>),
 }
 
 #[derive(serde::Deserialize)]
@@ -40,13 +41,14 @@ struct ProfileListUnknown {
 }
 
 #[derive(serde::Deserialize)]
-struct ProfileListV2 {
-    elements: Vec<ProfileListV2Element>,
+struct ProfileListV3 {
+    elements: Vec<ProfileListV3Element>,
 }
 
+/// `nix profile list --json` element for versions 1-3.
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ProfileListV2Element {
+pub struct ProfileListV3Element {
     /// How is an element 'deactivated'?
     pub active: bool,
 
@@ -57,6 +59,7 @@ pub struct ProfileListV2Element {
     pub store_paths: Vec<Utf8PathBuf>,
 
     /// `git+file:///Users/wiggles/.dotfiles?dir=config/home-mangler`
+    #[serde(alias = "uri")]
     pub url: Option<String>,
 
     /// `home-mangler.grandiflora.packages`
@@ -67,6 +70,7 @@ pub struct ProfileListV2Element {
     /// `git+file:///Users/wiggles/.dotfiles?dir=config/home-mangler`
     ///
     /// TODO: When does this differ from `url`?
+    #[serde(alias = "originalUri")]
     pub original_url: Option<String>,
 
     /// `null` or `["man"]`
