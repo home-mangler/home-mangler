@@ -24,7 +24,7 @@ impl Nix {
     pub fn command(&self, subcommand: &[&str]) -> Command {
         // TODO: Should run in `sh` after sourcing the Nix profile.
         let mut command = Command::new("nix");
-        command.args(["--extra-experimental-features", "nix-command"]);
+        command.args(["--extra-experimental-features", "nix-command flakes"]);
         command.args(subcommand);
         #[allow(clippy::single_match)]
         match subcommand {
