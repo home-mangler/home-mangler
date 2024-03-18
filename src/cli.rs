@@ -2,7 +2,9 @@ use camino::Utf8PathBuf;
 
 use crate::ProjectPaths;
 
+/// A friendly Nix profile manager.
 #[derive(clap::Parser)]
+#[command(version, author)]
 #[allow(rustdoc::bare_urls)]
 pub struct Args {
     /// Tracing log filter.
