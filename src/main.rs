@@ -26,7 +26,7 @@ fn main() -> miette::Result<()> {
     let config = Config::from_args(opts)?;
     tracing::update_log_filters(&filter_reload, &config.log_filter())?;
 
-    let nix = config.nix();
+    let nix = config.nix()?;
     let flake = config.flake()?;
     let hostname = config.hostname()?;
     ::tracing::debug!(%flake, %hostname, "Resolved configuration");
