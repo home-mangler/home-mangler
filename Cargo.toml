@@ -24,3 +24,4 @@ tracing = { version = "0.1.40", features = ["attributes"] }
 tracing-human-layer = "0.1.1"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 walkdir = "2.4.0"
+which = "6.0.0"

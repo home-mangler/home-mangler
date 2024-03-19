@@ -165,12 +165,12 @@ impl Config {
         }
     }
 
-    pub fn nix(&self) -> Nix {
-        Nix::default().with_profile(
+    pub fn nix(&self) -> miette::Result<Nix> {
+        Ok(Nix::new()?.with_profile(
             self.args
                 .profile
                 .clone()
                 .or_else(|| self.file.profile.clone()),
-        )
+        ))
     }
 }
