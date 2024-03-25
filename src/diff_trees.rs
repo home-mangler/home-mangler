@@ -19,7 +19,42 @@ pub fn diff_trees(
 ) -> miette::Result<String> {
     let diff = walk_trees(removed_paths, added_paths)?;
 
-    Ok(display_diff(&diff))
+    if diff.is_empty() {
+        Ok(format!(
+            "Installed paths changed but contents are identical:\n{}",
+            display_path_updates(removed_paths, added_paths)
+        ))
+    } else {
+        Ok(display_diff(&diff))
+    }
+}
+
+/// Sometimes, paths are added/removed from the `nix profile`, but no installed paths actually
+/// change. Instead of showing a blank diff, we list the updated paths.
+fn display_path_updates(
+    removed_paths: &BTreeSet<&Utf8Path>,
+    added_paths: &BTreeSet<&Utf8Path>,
+) -> String {
+    let mut ret = String::new();
+    for path in removed_paths {
+        ret.push_str(
+            &format!("- {path}")
+                .if_supports_color(Stream::Stdout, |text| text.red())
+                .to_string(),
+        );
+        ret.push('\n');
+    }
+
+    for path in added_paths {
+        ret.push_str(
+            &format!("+ {path}")
+                .if_supports_color(Stream::Stdout, |text| text.green())
+                .to_string(),
+        );
+        ret.push('\n');
+    }
+
+    ret
 }
 
 fn display_diff(diff: &Diff) -> String {
