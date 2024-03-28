@@ -9,6 +9,7 @@ edition = "2021"
 blake3 = { version = "1.5.0", features = ["mmap"] }
 camino = { version = "1.1.6", features = ["serde", "serde1"] }
 clap = { version = "4.4.7", features = ["derive", "wrap_help", "env"] }
+command-error = "0.4.0"
 directories = "5.0.1"
 gethostname = "0.4.3"
 itertools = "0.11.0"
@@ -23,5 +24,6 @@ toml = "0.8.6"
 tracing = { version = "0.1.40", features = ["attributes"] }
 tracing-human-layer = "0.1.1"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+utf8-command = "1.0.1"
 walkdir = "2.4.0"
 which = "6.0.0"

@@ -2,8 +2,8 @@ use std::collections::BTreeSet;
 use std::process::Stdio;
 
 use camino::Utf8PathBuf;
-
-use crate::command_ext::CommandExt;
+use command_error::CommandExt;
+use miette::IntoDiagnostic;
 
 use super::Nix;
 
@@ -19,7 +19,9 @@ impl Nix {
                 installable,
             ])
             .stderr(Stdio::inherit())
-            .stdout_checked_utf8()?;
+            .output_checked_utf8()
+            .into_diagnostic()?
+            .stdout;
 
         Ok(stdout.lines().map(Utf8PathBuf::from).collect())
     }

@@ -2,9 +2,10 @@ use std::collections::BTreeSet;
 
 use camino::Utf8Path;
 use camino::Utf8PathBuf;
+use command_error::CommandExt;
 use miette::Context;
+use miette::IntoDiagnostic;
 
-use crate::command_ext::CommandExt;
 use crate::flake::Flake;
 use crate::format_bulleted_list;
 use crate::nix::Nix;
@@ -28,6 +29,7 @@ pub fn ensure_packages(
     // TODO: We have a few things we could run in separate threads here.
     let resolved = nix.resolve(flake.clone())?;
 
+    tracing::info!("Building packages for install");
     let package_out_paths = nix.build(&package_installable)?;
     let profile = nix.profile_list()?;
     let missing_paths = profile.missing_paths(&package_out_paths)?;
@@ -124,7 +126,8 @@ impl ProfileList {
             );
             nix.command(&["profile", "remove"])
                 .args(elements_to_remove.iter().map(|element| element.to_string()))
-                .status_checked()?;
+                .status_checked()
+                .into_diagnostic()?;
         }
 
         Ok(paths_to_remove)
@@ -135,4 +138,6 @@ fn install_new_packages(nix: &Nix, flake_ref: &str) -> miette::Result<()> {
     nix.command(&["profile", "install"])
         .args(["--print-build-logs", flake_ref])
         .status_checked()
+        .into_diagnostic()
+        .map(|_| ())
 }

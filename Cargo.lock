@@ -219,6 +219,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 
 [[package]]
+name = "command-error"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "273afb523dba4bf7f4955398fe1be1d25704ad8003ef6de46436b4e5662e9020"
+dependencies = [
+ "dyn-clone",
+ "shell-words",
+ "utf8-command",
+]
+
+[[package]]
 name = "constant_time_eq"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -244,6 +255,12 @@ dependencies = [
  "redox_users",
  "windows-sys 0.48.0",
 ]
+
+[[package]]
+name = "dyn-clone"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
 
 [[package]]
 name = "either"
@@ -337,6 +354,7 @@ dependencies = [
  "blake3",
  "camino",
  "clap",
+ "command-error",
  "directories",
  "gethostname",
  "itertools",
@@ -351,6 +369,7 @@ dependencies = [
  "tracing",
  "tracing-human-layer",
  "tracing-subscriber",
+ "utf8-command",
  "walkdir",
  "which",
 ]
@@ -1021,6 +1040,12 @@ name = "unicode-width"
 version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e51733f11c9c4f72aa0c160008246859e340b00807569a0da0e7a1079b27ba85"
+
+[[package]]
+name = "utf8-command"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4b151524c94cda49046b29e6d20b03092ff9363b02acc1bf3994da60910c55b"
 
 [[package]]
 name = "utf8parse"
