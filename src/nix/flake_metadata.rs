@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use camino::Utf8PathBuf;
+use command_error::CommandExt;
 use miette::IntoDiagnostic;
 
-use crate::command_ext::CommandExt;
 use crate::flake::Flake;
 
 use super::Nix;
@@ -31,10 +31,13 @@ pub struct FlakeMetadata {
 
 impl Nix {
     pub fn flake_metadata(&self, flake: &Flake) -> miette::Result<FlakeMetadata> {
+        tracing::info!("Resolving flake metadata");
         let json_output = self
             .command(&["flake", "metadata"])
             .args(["--json", &flake.to_string()])
-            .stdout_checked_utf8()?;
+            .output_checked_utf8()
+            .into_diagnostic()?
+            .stdout;
 
         serde_json::from_str(&json_output).into_diagnostic()
     }

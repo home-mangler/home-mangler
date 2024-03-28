@@ -1,11 +1,10 @@
 use std::collections::BTreeMap;
 
 use camino::Utf8PathBuf;
+use command_error::CommandExt;
 use miette::miette;
 use miette::IntoDiagnostic;
 use serde_json::Value as Json;
-
-use crate::command_ext::CommandExt;
 
 use super::Nix;
 
@@ -14,7 +13,9 @@ impl Nix {
         let json_output = self
             .command(&["profile", "list"])
             .arg("--json")
-            .stdout_checked_utf8()?;
+            .output_checked_utf8()
+            .into_diagnostic()?
+            .stdout;
 
         let data: ProfileListUnknown = serde_json::from_str(&json_output).into_diagnostic()?;
 
