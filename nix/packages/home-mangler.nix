@@ -1,5 +1,5 @@
 {
-  system,
+  pkgs,
   lib,
   stdenv,
   libiconv,
@@ -9,7 +9,7 @@
   rust-analyzer,
 }: let
   inherit (inputs) crane advisory-db;
-  craneLib = crane.lib.${system};
+  craneLib = crane.mkLib pkgs;
 
   commonArgs' = {
     src = craneLib.cleanCargoSource (craneLib.path ../../.);
