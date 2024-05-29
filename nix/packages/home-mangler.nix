@@ -16,10 +16,7 @@
 
     nativeBuildInputs = lib.optionals stdenv.isDarwin [
       # Additional darwin specific inputs can be set here
-      (libiconv.override {
-        enableStatic = true;
-        enableShared = false;
-      })
+      libiconv
       darwin.apple_sdk.frameworks.CoreServices
     ];
   };
