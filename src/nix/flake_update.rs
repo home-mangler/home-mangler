@@ -9,7 +9,7 @@ impl Nix {
     pub fn flake_update(&self, flake: &Flake) -> miette::Result<()> {
         tracing::info!("Updating flake inputs");
         self.command(&["flake", "update", "--flake"])
-            .arg(&flake.to_string())
+            .arg(flake.to_string())
             .status_checked()
             .into_diagnostic()
             .map(|_| ())

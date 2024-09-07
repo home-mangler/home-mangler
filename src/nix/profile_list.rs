@@ -64,6 +64,7 @@ struct ProfileListV3 {
 /// `nix profile list --json` element for versions 1-3.
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct ProfileListV3Element {
     /// How is an element 'deactivated'?
     pub active: bool,
