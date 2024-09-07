@@ -4,11 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     systems.url = "github:nix-systems/default";
-    crane = {
-      # Needs https://github.com/ipetkov/crane/pull/631
-      url = "github:ipetkov/crane/109987da061a1bf452f435f1653c47511587d919";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    crane.url = "github:ipetkov/crane";
     advisory-db = {
       url = "github:rustsec/advisory-db";
       flake = false;
