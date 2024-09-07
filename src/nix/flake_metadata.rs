@@ -11,6 +11,7 @@ use super::Nix;
 pub struct ResolvedFlake {
     /// The original user input string. May not match the `original_url`, e.g. `.` is parsed
     /// into an absolute path, `nixpkgs` is resolved to `flake:nixpkgs`, etc.
+    #[allow(dead_code)]
     pub original: Flake,
     /// The resolved and parsed URL.
     pub metadata: FlakeMetadata,
@@ -18,6 +19,7 @@ pub struct ResolvedFlake {
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct FlakeMetadata {
     /// Source store path.
     pub path: Utf8PathBuf,
