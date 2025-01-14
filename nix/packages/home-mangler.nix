@@ -19,6 +19,13 @@
       libiconv
       darwin.apple_sdk.frameworks.CoreServices
     ];
+
+    meta = {
+      description = "Nix profile and home directory manager";
+      homepage = "https://github.com/home-mangler/home-mangler";
+      license = lib.licenses.mit;
+      maintainers = [ lib.maintainers._9999years ];
+    };
   };
 
   # Build *just* the cargo dependencies, so we can reuse
