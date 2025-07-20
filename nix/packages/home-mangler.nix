@@ -3,7 +3,6 @@
   lib,
   stdenv,
   libiconv,
-  darwin,
   inputs,
   rustPlatform,
   rust-analyzer,
@@ -17,7 +16,6 @@
     nativeBuildInputs = lib.optionals stdenv.isDarwin [
       # Additional darwin specific inputs can be set here
       libiconv
-      darwin.apple_sdk.frameworks.CoreServices
     ];
 
     meta = {
